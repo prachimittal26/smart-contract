@@ -1,97 +1,126 @@
-# smart-contract
-Simple Storage DApp
-This is a simple Decentralized Application (DApp) that interacts with a smart contract to store and retrieve a value on the Ethereum blockchain. The frontend is built with HTML and JavaScript, using Web3.js to communicate with the smart contract.
+# Degen Token Contract
 
-Prerequisites
-Node.js
-npm (Node Package Manager)
-MetaMask (browser extension for Ethereum)
-Installation
-Clone the repository:
+This repository contains the Degen token smart contract, which implements an ERC20 token with additional functionalities for minting, burning, and redeeming items. The contract is built using Solidity and the OpenZeppelin library, and it can be deployed and managed using the Hardhat framework.
 
-sh
-Copy code
-git clone <repository-url>
-cd <repository-directory>
-Install dependencies:
+## Contract Overview
 
-sh
+### Degen.sol
+
+The `Degen` contract is an ERC20 token with the following features:
+- **Minting**: The contract owner can mint new tokens.
+- **Burning**: Token holders can burn their tokens.
+- **Transfer**: Tokens can be transferred between addresses.
+- **Redeemable Items**: Token holders can redeem their tokens for various in-game items.
+
+### Token Functions
+
+- `mint(address to, uint256 amount)`: Allows the contract owner to mint new tokens.
+- `burn(uint256 amount)`: Allows token holders to burn their tokens.
+- `transfer(address recipient, uint256 amount)`: Transfers tokens to another address.
+- `redeemAsset(uint256 item, uint256 quantity)`: Redeems tokens for specific in-game items.
+- `showRedeemableItems()`: Displays the list of redeemable items.
+- `showRedeemedItems(address account)`: Shows the redeemed items for a specific account.
+
+## Deployment
+
+This repository includes a deployment script that uses Hardhat to deploy the contract.
+
+### Prerequisites
+
+- Node.js
+- Hardhat
+- Ethers.js
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-repo/degen-token.git
+   cd degen-token
+Install the dependencies:
+bash
 Copy code
 npm install
-Compile and deploy the smart contract (assuming you have Truffle and Ganache set up):
+Compile the Contract
+To compile the contract, run the following command:
 
-sh
+bash
 Copy code
-truffle compile
-truffle migrate
-Usage
-Open index.html in your preferred web browser.
+npx hardhat compile
+Deploy the Contract
+To deploy the contract, use the provided deployment script. Ensure you have a network configuration set up in your Hardhat configuration file (hardhat.config.js).
 
-Make sure MetaMask is installed and configured to connect to your local blockchain (Ganache).
+Update hardhat.config.js with your network configuration.
 
-Use the DApp to interact with the smart contract:
+Run the deployment script:
 
-Set Value: Enter a value in the input field and click "Set" to store the value on the blockchain.
-Get Value: Click "Get Value" to retrieve the stored value from the blockchain and display it on the page.
-Code Explanation
-index.html
-html
+bash
 Copy code
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Storage</title>
-</head>
-<body>
-    <h1>Simple Storage DApp</h1>
-    <div>
-        <label for="valueInput">Set Value:</label>
-        <input type="number" id="valueInput">
-        <button onclick="setValue()">Set</button>
-    </div>
-    <div>
-        <button onclick="getValue()">Get Value</button>
-        <p id="valueDisplay"></p>
-    </div>
+npx hardhat run scripts/deploy.js --network <your-network>
+Replace <your-network> with the name of the network you want to deploy to (e.g., ropsten, mainnet, etc.).
 
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.6.0/dist/web3.min.js"></script>
-    <script src="app.js"></script>
-</body>
-</html>
-app.js
+Example Deployment Script
+The following script (scripts/deploy.js) deploys the Degen contract:
+
 javascript
 Copy code
-let web3;
-let contractInstance;
+const { ethers } = require('hardhat');
 
-const contractAddress = 'YOUR_CONTRACT_ADDRESS';
-const contractABI = [
-    // Add your contract's ABI here
-];
+async function main() {
+  // Compile the contract
+  const Degen = await ethers.getContractFactory('Degen');
+  console.log('Compiling contract...');
 
-window.addEventListener('load', async () => {
-    if (window.ethereum) {
-        web3 = new Web3(window.ethereum);
-        await window.ethereum.enable();
-    } else {
-        console.log('No Ethereum provider detected. Install MetaMask.');
-        return;
-    }
+  // Deploy the contract
+  const degen = await Degen.deploy();
+  console.log('Deploying contract...');
 
-    contractInstance = new web3.eth.Contract(contractABI, contractAddress);
-});
-
-async function setValue() {
-    const value = document.getElementById('valueInput').value;
-    const accounts = await web3.eth.getAccounts();
-    await contractInstance.methods.set(value).send({ from: accounts[0] });
+  // Wait for the contract to be mined and get the deployed address
+  await degen.deployed();
+  console.log('Contract deployed to:', degen.address);
 }
 
-async function getValue() {
-    const value = await contractInstance.methods.get().call();
-    document.getElementById('valueDisplay').innerText = value;
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+Verifying Deployment
+Once the contract is deployed, you can verify the deployment by checking the address printed in the console output.
+
+Interacting with the Contract
+After deployment, you can interact with the contract using scripts or a frontend application. The following example shows how to call the mint function:
+
+javascript
+Copy code
+const { ethers } = require('hardhat');
+
+async function main() {
+  // Replace with your contract address
+  const contractAddress = 'YOUR_CONTRACT_ADDRESS';
+
+  // Get the contract instance
+  const Degen = await ethers.getContractFactory('Degen');
+  const degen = Degen.attach(contractAddress);
+
+  // Mint new tokens
+  const tx = await degen.mint('RECIPIENT_ADDRESS', ethers.utils.parseUnits('100', 18));
+  await tx.wait();
+
+  console.log('Tokens minted successfully');
 }
-Summary
-This DApp provides a simple interface to interact with a blockchain-based simple storage contract. Users can set and get a value using the provided input field and buttons, with Web3.js handling the interaction with the blockchain. Make sure to update the contractAddress and contractABI in app.js with your contract's actual address and ABI.
+
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+Replace YOUR_CONTRACT_ADDRESS with the address of your deployed contract and RECIPIENT_ADDRESS with the address to receive the minted tokens.
+
+License
+This project is licensed under the MIT License.
+
+csharp
+This `README.md` file provides a comprehensive overview of the contract, its functionalities, and deta
