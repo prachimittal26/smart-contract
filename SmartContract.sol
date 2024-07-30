@@ -1,22 +1,39 @@
-const { ethers } = require('hardhat');
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
-async function main() {
-  // Compile the contract
-  const MyContract = await ethers.getContractFactory('SimpleContract');
-  console.log('Compiling contract...');
+contract SimpleContract {
+    struct User {
+        string name;
+        string email;
+        string password;
+    }
 
-  // Deploy the contract
-  const myContract = await MyContract.deploy();
-  console.log('Deploying contract...');
+    mapping(string => User) private users;
+    string[] private userIds;
 
-  // Wait for the contract to be mined and get the deployed address
-  await myContract.deployed();
-  console.log('Contract deployed to:', myContract.address);
+    function setUser(string memory _name, string memory _email, string memory _password) public {
+        User memory newUser = User({ name: _name, email: _email, password: _password });
+        users[_email] = newUser;
+        userIds.push(_email);
+    }
+
+    function getAllUsers() public view returns (User[] memory) {
+        User[] memory usersArray = new User[](userIds.length);
+        for(uint256 i = 0; i < userIds.length; i++) {
+            usersArray[i] = users[userIds[i]];
+        }
+        return usersArray;
+    }
+
+    function deleteUser(string memory _email) public {
+        delete users[_email];
+        for(uint256 i = 0; i < userIds.length; i++) {
+            if (keccak256(bytes(userIds[i])) == keccak256(bytes(_email))) {
+                userIds[i] = userIds[userIds.length - 1];
+                userIds.pop();
+                break;
+            }
+        }
+    }
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
